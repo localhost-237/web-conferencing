@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}LocalCast - Private Network Broadcasting{% endblock %}
+    </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+      .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen"
+  >
+    {% block content %}{% endblock %}
+
+    <script>
+      // Initialize Lucide icons
+      lucide.createIcons();
+
+      // Toast notification system
+      function showToast(title, description, type = "info") {
+        const toast = document.createElement("div");
+        toast.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+          type === "error"
+            ? "bg-red-500 text-white"
+            : type === "success"
+            ? "bg-green-500 text-white"
+            : "bg-blue-500 text-white"
+        }`;
+        toast.innerHTML = `
+                <div class="font-semibold">${title}</div>
+                <div class="text-sm">${description}</div>
+            `;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.remove();
+        }, 5000);
+      }
+
+      // Global error handler
+      window.addEventListener("error", function (e) {
+        console.error("Global error:", e.error);
+      });
+    </script>
+  </body>
+</html>

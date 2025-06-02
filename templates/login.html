@@ -1,0 +1,460 @@
+{% extends "base.html" %} {% block title %}Login - LocalCast{% endblock %} {%
+block content %}
+<div class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <div class="flex items-center justify-center gap-3 mb-4">
+        <div class="p-3 bg-blue-600 rounded-lg">
+          <i data-lucide="radio" class="h-8 w-8 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+            LocalCast
+          </h1>
+          <p class="text-gray-600 dark:text-gray-300">
+            Private Network Broadcasting
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+          Access Control
+        </h2>
+        <p class="text-gray-600 dark:text-gray-300">
+          Sign in to access the broadcasting platform
+        </p>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="flex mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+        <button
+          id="loginTab"
+          class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white dark:bg-gray-800 text-blue-600 shadow-sm"
+        >
+          Login
+        </button>
+        <button
+          id="registerTab"
+          class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-500 hover:text-gray-700"
+        >
+          Register
+        </button>
+      </div>
+
+      <!-- Error Alert -->
+      <div
+        id="errorAlert"
+        class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg"
+      >
+        <div class="flex">
+          <i data-lucide="alert-circle" class="h-5 w-5 text-red-400"></i>
+          <div class="ml-3">
+            <p id="errorMessage" class="text-sm text-red-800"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginForm">
+        <form id="loginFormElement" class="space-y-4">
+          <div>
+            <label
+              for="username"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >Username</label
+            >
+            <input
+              type="text"
+              id="username"
+              name="username"
+              required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label
+              for="password"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >Password</label
+            >
+            <div class="relative">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              />
+              <button
+                type="button"
+                id="togglePassword"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <i data-lucide="eye" class="h-5 w-5 text-gray-400"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              name="rememberMe"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label
+              for="rememberMe"
+              class="ml-2 block text-sm text-gray-900 dark:text-gray-300"
+            >
+              Remember me
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            id="loginButton"
+            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Sign In
+          </button>
+        </form>
+
+        <!-- Demo Accounts -->
+        <div class="mt-6 pt-6 border-t border-gray-200">
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            Demo Accounts:
+          </p>
+          <div class="space-y-2">
+            <button
+              onclick="setDemoCredentials('admin', 'admin123')"
+              class="w-full flex items-center justify-start px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50"
+            >
+              <i data-lucide="shield" class="h-4 w-4 mr-2"></i>
+              Admin (admin/admin123)
+            </button>
+            <button
+              onclick="setDemoCredentials('teacher', 'teacher123')"
+              class="w-full flex items-center justify-start px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50"
+            >
+              <i data-lucide="video" class="h-4 w-4 mr-2"></i>
+              Broadcaster (teacher/teacher123)
+            </button>
+            <button
+              onclick="setDemoCredentials('student', 'student123')"
+              class="w-full flex items-center justify-start px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50"
+            >
+              <i data-lucide="users" class="h-4 w-4 mr-2"></i>
+              Viewer (student/student123)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerForm" class="hidden">
+        <form id="registerFormElement" class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                for="regFullName"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >Full Name</label
+              >
+              <input
+                type="text"
+                id="regFullName"
+                name="fullName"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label
+                for="regUsername"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >Username</label
+              >
+              <input
+                type="text"
+                id="regUsername"
+                name="username"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="regEmail"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="regEmail"
+              name="email"
+              required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                for="regRole"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >Role</label
+              >
+              <select
+                id="regRole"
+                name="role"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="viewer">Viewer</option>
+                <option value="broadcaster">Broadcaster</option>
+                <option value="moderator">Moderator</option>
+              </select>
+            </div>
+            <div>
+              <label
+                for="regDepartment"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >Department</label
+              >
+              <input
+                type="text"
+                id="regDepartment"
+                name="department"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="regPassword"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >Password</label
+            >
+            <input
+              type="password"
+              id="regPassword"
+              name="password"
+              required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label
+              for="regConfirmPassword"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >Confirm Password</label
+            >
+            <input
+              type="password"
+              id="regConfirmPassword"
+              name="confirmPassword"
+              required
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            id="registerButton"
+            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Create Account
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Network Status -->
+    <div class="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+      <div class="flex items-center justify-between text-sm">
+        <span class="text-gray-600 dark:text-gray-400">Network Status:</span>
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span class="text-green-600">LocalCast Network Active</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tab switching
+  document.getElementById("loginTab").addEventListener("click", function () {
+    showLoginForm();
+  });
+
+  document.getElementById("registerTab").addEventListener("click", function () {
+    showRegisterForm();
+  });
+
+  function showLoginForm() {
+    document.getElementById("loginForm").classList.remove("hidden");
+    document.getElementById("registerForm").classList.add("hidden");
+    document.getElementById("loginTab").className =
+      "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white dark:bg-gray-800 text-blue-600 shadow-sm";
+    document.getElementById("registerTab").className =
+      "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-500 hover:text-gray-700";
+  }
+
+  function showRegisterForm() {
+    document.getElementById("loginForm").classList.add("hidden");
+    document.getElementById("registerForm").classList.remove("hidden");
+    document.getElementById("registerTab").className =
+      "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white dark:bg-gray-800 text-blue-600 shadow-sm";
+    document.getElementById("loginTab").className =
+      "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-500 hover:text-gray-700";
+  }
+
+  // Password toggle
+  document
+    .getElementById("togglePassword")
+    .addEventListener("click", function () {
+      const passwordField = document.getElementById("password");
+      const icon = this.querySelector("i");
+
+      if (passwordField.type === "password") {
+        passwordField.type = "text";
+        icon.setAttribute("data-lucide", "eye-off");
+      } else {
+        passwordField.type = "password";
+        icon.setAttribute("data-lucide", "eye");
+      }
+      lucide.createIcons();
+    });
+
+  // Demo credentials
+  function setDemoCredentials(username, password) {
+    document.getElementById("username").value = username;
+    document.getElementById("password").value = password;
+  }
+
+  // Login form submission
+  document
+    .getElementById("loginFormElement")
+    .addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const button = document.getElementById("loginButton");
+      button.textContent = "Signing in...";
+      button.disabled = true;
+
+      const formData = new FormData(this);
+      const data = {
+        username: formData.get("username"),
+        password: formData.get("password"),
+        rememberMe: formData.get("rememberMe") === "on",
+      };
+
+      try {
+        const response = await fetch("/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          localStorage.setItem("user", JSON.stringify(result.user));
+          localStorage.setItem("token", result.token);
+          showToast(
+            "Login Successful",
+            `Welcome back, ${result.user.full_name}!`,
+            "success"
+          );
+          window.location.href = "/";
+        } else {
+          showError(result.error || "Login failed");
+        }
+      } catch (error) {
+        showError("Network error. Please try again.");
+      } finally {
+        button.textContent = "Sign In";
+        button.disabled = false;
+      }
+    });
+
+  // Register form submission
+  document
+    .getElementById("registerFormElement")
+    .addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const password = document.getElementById("regPassword").value;
+      const confirmPassword =
+        document.getElementById("regConfirmPassword").value;
+
+      if (password !== confirmPassword) {
+        showError("Passwords do not match");
+        return;
+      }
+
+      const button = document.getElementById("registerButton");
+      button.textContent = "Creating Account...";
+      button.disabled = true;
+
+      const formData = new FormData(this);
+      const data = {
+        username: formData.get("username"),
+        email: formData.get("email"),
+        fullName: formData.get("fullName"),
+        role: formData.get("role"),
+        department: formData.get("department"),
+        password: formData.get("password"),
+      };
+
+      try {
+        const response = await fetch("/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showToast(
+            "Registration Successful",
+            "Your account has been created. Please log in.",
+            "success"
+          );
+          showLoginForm();
+          this.reset();
+        } else {
+          showError(result.error || "Registration failed");
+        }
+      } catch (error) {
+        showError("Network error. Please try again.");
+      } finally {
+        button.textContent = "Create Account";
+        button.disabled = false;
+      }
+    });
+
+  function showError(message) {
+    document.getElementById("errorMessage").textContent = message;
+    document.getElementById("errorAlert").classList.remove("hidden");
+
+    setTimeout(() => {
+      document.getElementById("errorAlert").classList.add("hidden");
+    }, 5000);
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,746 @@
+{% extends "base.html" %} {% block title %}Dashboard - LocalCast{% endblock %}
+{% block content %}
+<div class="container mx-auto p-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-blue-600 rounded-lg">
+          <i data-lucide="radio" class="h-6 w-6 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+            LocalCast
+          </h1>
+          <p class="text-gray-600 dark:text-gray-300">
+            Private Network Multimedia Broadcasting
+          </p>
+        </div>
+      </div>
+
+      <!-- User Profile -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 w-80">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center"
+            >
+              <span class="text-white font-medium">
+                {{ user.full_name.split()[0][0] }}{{
+                user.full_name.split()[-1][0] if user.full_name.split()|length >
+                1 else '' }}
+              </span>
+            </div>
+            <div>
+              <p class="font-medium text-sm">{{ user.full_name }}</p>
+              <p class="text-xs text-gray-500 capitalize">
+                {{ user.role }} • {{ user.department }}
+              </p>
+            </div>
+          </div>
+          <a
+            href="/logout"
+            class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Logout
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="mb-6">
+    <div class="flex space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+      <button
+        id="dashboardTab"
+        class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white dark:bg-gray-800 text-blue-600 shadow-sm"
+      >
+        Dashboard
+      </button>
+      {% if user.has_permission('broadcast') %}
+      <button
+        id="broadcastTab"
+        class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-500 hover:text-gray-700"
+      >
+        Broadcast
+      </button>
+      {% endif %}
+      <button
+        id="viewerTab"
+        class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-500 hover:text-gray-700"
+      >
+        Join Stream
+      </button>
+      {% if user.has_permission('admin') %}
+      <button
+        id="adminTab"
+        class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-500 hover:text-gray-700"
+      >
+        Admin
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div id="dashboardContent">
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="video" class="h-5 w-5 text-blue-600"></i>
+          <h3 class="text-lg font-semibold">Live Streams</h3>
+        </div>
+        <div class="text-3xl font-bold text-blue-600">{{ live_streams }}</div>
+        <p class="text-sm text-gray-600">Currently broadcasting</p>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="users" class="h-5 w-5 text-green-600"></i>
+          <h3 class="text-lg font-semibold">Total Viewers</h3>
+        </div>
+        <div class="text-3xl font-bold text-green-600">{{ total_viewers }}</div>
+        <p class="text-sm text-gray-600">Across all streams</p>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="globe" class="h-5 w-5 text-purple-600"></i>
+          <h3 class="text-lg font-semibold">Network Load</h3>
+        </div>
+        <div class="text-3xl font-bold text-purple-600">23%</div>
+        <p class="text-sm text-gray-600">Bandwidth usage</p>
+      </div>
+    </div>
+
+    <!-- Active Streams -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <h2 class="text-xl font-semibold">Active Streams</h2>
+        <p class="text-gray-600 dark:text-gray-300">
+          Live and scheduled broadcasts on your network
+        </p>
+      </div>
+      <div class="p-6">
+        <div id="streamsList" class="space-y-4">
+          {% for stream in streams %}
+          <div
+            class="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+          >
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <h3 class="font-semibold">{{ stream.title }}</h3>
+                <span
+                  class="px-2 py-1 text-xs rounded-full {% if stream.status == 'live' %}bg-blue-100 text-blue-800 {% elif stream.status == 'scheduled' %}bg-gray-100 text-gray-800 {% else %}bg-gray-100 text-gray-600{% endif %}"
+                >
+                  {{ stream.status }}
+                </span>
+                <span
+                  class="px-2 py-1 text-xs border border-gray-300 rounded-full"
+                  >{{ stream.category }}</span
+                >
+              </div>
+              <p class="text-sm text-gray-600 mb-1">{{ stream.description }}</p>
+              <div class="flex items-center gap-4 text-xs text-gray-500">
+                <span>By {{ stream.broadcaster.full_name }}</span>
+                <span>{{ stream.viewers }} viewers</span>
+                <span>{{ stream.quality }}</span>
+                <span>{{ stream.start_time.strftime('%H:%M') }}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              {% if stream.status == 'live' %}
+              <button
+                onclick="joinStream('{{ stream.id }}')"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+              >
+                <i data-lucide="play" class="h-4 w-4"></i>
+                Join
+              </button>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Broadcast Content -->
+  {% if user.has_permission('broadcast') %}
+  <div id="broadcastContent" class="hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Stream Setup -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-xl font-semibold">Start New Broadcast</h2>
+          <p class="text-gray-600 dark:text-gray-300">
+            Configure your stream settings
+          </p>
+        </div>
+        <div class="p-6">
+          <form id="streamForm" class="space-y-4">
+            <div>
+              <label
+                for="streamTitle"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >Stream Title *</label
+              >
+              <input
+                type="text"
+                id="streamTitle"
+                name="title"
+                required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label
+                for="streamDescription"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >Description</label
+              >
+              <textarea
+                id="streamDescription"
+                name="description"
+                rows="3"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              ></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  for="streamCategory"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >Category *</label
+                >
+                <select
+                  id="streamCategory"
+                  name="category"
+                  required
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select category</option>
+                  <option value="Education">Education</option>
+                  <option value="Health">Health</option>
+                  <option value="News">News</option>
+                  <option value="Training">Training</option>
+                  <option value="Meeting">Meeting</option>
+                  <option value="Entertainment">Entertainment</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  for="streamQuality"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >Quality</label
+                >
+                <select
+                  id="streamQuality"
+                  name="quality"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="480p">480p (Low bandwidth)</option>
+                  <option value="720p" selected>720p (Recommended)</option>
+                  <option value="1080p">1080p (High quality)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="pt-4">
+              <button
+                type="submit"
+                id="startStreamBtn"
+                class="w-full flex justify-center items-center gap-2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <i data-lucide="video" class="h-4 w-4"></i>
+                Start Broadcast
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Stream Controls -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-xl font-semibold">Stream Controls</h2>
+          <p class="text-gray-600 dark:text-gray-300">
+            Manage your broadcast settings
+          </p>
+        </div>
+        <div class="p-6 space-y-4">
+          <!-- Video Preview -->
+          <div
+            class="aspect-video bg-gray-900 rounded-lg flex items-center justify-center"
+          >
+            <div id="videoPreview" class="text-center text-white">
+              <i
+                data-lucide="video-off"
+                class="h-12 w-12 mx-auto mb-2 text-gray-400"
+              ></i>
+              <p class="text-gray-400">Camera Off</p>
+            </div>
+          </div>
+
+          <!-- Control Buttons -->
+          <div class="grid grid-cols-2 gap-4">
+            <button
+              id="muteBtn"
+              class="flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              <i data-lucide="mic" class="h-4 w-4"></i>
+              Mute
+            </button>
+
+            <button
+              id="videoBtn"
+              class="flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              <i data-lucide="video" class="h-4 w-4"></i>
+              Stop Video
+            </button>
+          </div>
+
+          <div
+            id="liveIndicator"
+            class="hidden p-4 bg-green-50 dark:bg-green-900/20 rounded-lg"
+          >
+            <div
+              class="flex items-center gap-2 text-green-700 dark:text-green-400"
+            >
+              <div
+                class="w-2 h-2 bg-green-500 rounded-full animate-pulse"
+              ></div>
+              <span class="font-medium">Broadcasting Live</span>
+            </div>
+            <p class="text-sm text-green-600 dark:text-green-300 mt-1">
+              Your stream is being distributed to all connected devices
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Viewer Content -->
+  <div id="viewerContent" class="hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <h2 class="text-xl font-semibold">Available Streams</h2>
+        <p class="text-gray-600 dark:text-gray-300">
+          Join live broadcasts on your network
+        </p>
+      </div>
+      <div class="p-6">
+        <div
+          id="liveStreamsList"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          <!-- Live streams will be populated here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Content -->
+  {% if user.has_permission('admin') %}
+  <div id="adminContent" class="hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <!-- Network Settings -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-xl font-semibold flex items-center gap-2">
+            <i data-lucide="settings" class="h-5 w-5"></i>
+            Network Configuration
+          </h2>
+        </div>
+        <div class="p-6 space-y-4">
+          <div>
+            <label
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >Network Name</label
+            >
+            <input
+              type="text"
+              value="LocalCast-Network"
+              readonly
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >Local IP Address</label
+            >
+            <input
+              type="text"
+              value="192.168.1.100"
+              readonly
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >Max Concurrent Streams</label
+            >
+            <select
+              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="3">3 streams</option>
+              <option value="5" selected>5 streams</option>
+              <option value="10">10 streams</option>
+              <option value="unlimited">Unlimited</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Status -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-xl font-semibold">System Status</h2>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="text-center p-4 border border-gray-200 rounded-lg">
+              <div class="text-2xl font-bold text-green-600">99.9%</div>
+              <p class="text-sm text-gray-600">Uptime</p>
+            </div>
+            <div class="text-center p-4 border border-gray-200 rounded-lg">
+              <div class="text-2xl font-bold text-blue-600">23%</div>
+              <p class="text-sm text-gray-600">CPU Usage</p>
+            </div>
+            <div class="text-center p-4 border border-gray-200 rounded-lg">
+              <div class="text-2xl font-bold text-purple-600">45%</div>
+              <p class="text-sm text-gray-600">Memory</p>
+            </div>
+            <div class="text-center p-4 border border-gray-200 rounded-lg">
+              <div class="text-2xl font-bold text-orange-600">12MB/s</div>
+              <p class="text-sm text-gray-600">Network</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Management -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold flex items-center gap-2">
+            <i data-lucide="users" class="h-5 w-5"></i>
+            User Management
+          </h2>
+          <button
+            id="addUserBtn"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+          >
+            <i data-lucide="user-plus" class="h-4 w-4"></i>
+            Add User
+          </button>
+        </div>
+      </div>
+      <div class="p-6">
+        <div id="usersTable" class="overflow-x-auto">
+          <!-- Users table will be populated here -->
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  let currentTab = 'dashboard';
+  let isStreaming = false;
+  let isMuted = false;
+  let isVideoOff = false;
+
+  // Tab switching
+  function switchTab(tabName) {
+      // Hide all content
+      document.querySelectorAll('[id$="Content"]').forEach(content => {
+          content.classList.add('hidden');
+      });
+
+      // Show selected content
+      document.getElementById(tabName + 'Content').classList.remove('hidden');
+
+      // Update tab buttons
+      document.querySelectorAll('[id$="Tab"]').forEach(tab => {
+          tab.className = 'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-500 hover:text-gray-700';
+      });
+
+      document.getElementById(tabName + 'Tab').className = 'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white dark:bg-gray-800 text-blue-600 shadow-sm';
+
+      currentTab = tabName;
+
+      // Load content based on tab
+      if (tabName === 'viewer') {
+          loadLiveStreams();
+      } else if (tabName === 'admin') {
+          loadUsers();
+      }
+  }
+
+  // Event listeners for tabs
+  document.getElementById('dashboardTab').addEventListener('click', () => switchTab('dashboard'));
+  {% if user.has_permission('broadcast') %}
+  document.getElementById('broadcastTab').addEventListener('click', () => switchTab('broadcast'));
+  {% endif %}
+  document.getElementById('viewerTab').addEventListener('click', () => switchTab('viewer'));
+  {% if user.has_permission('admin') %}
+  document.getElementById('adminTab').addEventListener('click', () => switchTab('admin'));
+  {% endif %}
+
+  // Stream form submission
+  {% if user.has_permission('broadcast') %}
+  document.getElementById('streamForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const streamData = {
+          title: formData.get('title'),
+          description: formData.get('description'),
+          category: formData.get('category'),
+          quality: formData.get('quality')
+      };
+
+      try {
+          const response = await fetch('/api/streams', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                  action: 'create',
+                  streamData: streamData
+              })
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+              isStreaming = true;
+              updateStreamControls();
+              showToast('Stream Started', 'Your broadcast is now live on the local network', 'success');
+              this.reset();
+          } else {
+              showToast('Error', result.error || 'Failed to start stream', 'error');
+          }
+      } catch (error) {
+          showToast('Error', 'Network error. Please try again.', 'error');
+      }
+  });
+
+  function updateStreamControls() {
+      const startBtn = document.getElementById('startStreamBtn');
+      const videoPreview = document.getElementById('videoPreview');
+      const liveIndicator = document.getElementById('liveIndicator');
+
+      if (isStreaming) {
+          startBtn.innerHTML = '<i data-lucide="square" class="h-4 w-4"></i> Stop Broadcast';
+          startBtn.className = 'w-full flex justify-center items-center gap-2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500';
+
+          videoPreview.innerHTML = `
+              <i data-lucide="video" class="h-12 w-12 mx-auto mb-2"></i>
+              <p>Live Preview</p>
+              <span class="mt-2 px-2 py-1 bg-red-600 text-white text-xs rounded">LIVE</span>
+          `;
+
+          liveIndicator.classList.remove('hidden');
+      } else {
+          startBtn.innerHTML = '<i data-lucide="video" class="h-4 w-4"></i> Start Broadcast';
+          startBtn.className = 'w-full flex justify-center items-center gap-2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500';
+
+          videoPreview.innerHTML = `
+              <i data-lucide="video-off" class="h-12 w-12 mx-auto mb-2 text-gray-400"></i>
+              <p class="text-gray-400">Camera Off</p>
+          `;
+
+          liveIndicator.classList.add('hidden');
+      }
+
+      lucide.createIcons();
+  }
+  {% endif %}
+
+  // Join stream function
+  function joinStream(streamId) {
+      showToast('Joining Stream', 'Connecting to the broadcast...', 'info');
+
+      // In a real implementation, this would open a video player
+      setTimeout(() => {
+          showToast('Connected', 'You are now viewing the stream', 'success');
+      }, 2000);
+  }
+
+  // Load live streams for viewer tab
+  async function loadLiveStreams() {
+      try {
+          const response = await fetch('/api/streams');
+          const result = await response.json();
+
+          if (result.success) {
+              const liveStreams = result.streams.filter(stream => stream.status === '
+              const liveStreams = result.streams.filter(stream => stream.status === 'live');
+              const liveStreamsList = document.getElementById('liveStreamsList');
+
+              if (liveStreams.length === 0) {
+                  liveStreamsList.innerHTML = `
+                      <div class="col-span-full text-center py-12">
+                          <i data-lucide="video-off" class="h-12 w-12 mx-auto text-gray-400 mb-4"></i>
+                          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Live Streams</h3>
+                          <p class="text-gray-600 dark:text-gray-300">
+                              There are currently no active broadcasts on your network.
+                          </p>
+                      </div>
+                  `;
+              } else {
+                  liveStreamsList.innerHTML = liveStreams.map(stream => `
+                      <div class="bg-white dark:bg-gray-700 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
+                          <div class="p-4">
+                              <div class="aspect-video bg-gray-900 rounded-lg mb-3 flex items-center justify-center">
+                                  <div class="text-center text-white">
+                                      <i data-lucide="video" class="h-8 w-8 mx-auto mb-1"></i>
+                                      <span class="px-2 py-1 bg-red-600 text-white text-xs rounded">LIVE</span>
+                                  </div>
+                              </div>
+
+                              <h3 class="font-semibold mb-1">${stream.title}</h3>
+                              <p class="text-sm text-gray-600 mb-2">${stream.description}</p>
+
+                              <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                                  <span>${stream.broadcaster}</span>
+                                  <span>${stream.viewers} viewers</span>
+                              </div>
+
+                              <button onclick="joinStream('${stream.id}')"
+                                      class="w-full flex items-center justify-center gap-2 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                  <i data-lucide="play" class="h-4 w-4"></i>
+                                  Join Stream
+                              </button>
+                          </div>
+                      </div>
+                  `).join('');
+              }
+
+              lucide.createIcons();
+          }
+      } catch (error) {
+          console.error('Failed to load live streams:', error);
+      }
+  }
+
+  // Load users for admin tab
+  async function loadUsers() {
+      {% if user.has_permission('admin') %}
+      try {
+          const response = await fetch('/api/users');
+          const result = await response.json();
+
+          if (result.success) {
+              const usersTable = document.getElementById('usersTable');
+              usersTable.innerHTML = `
+                  <table class="min-w-full divide-y divide-gray-200">
+                      <thead class="bg-gray-50">
+                          <tr>
+                              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
+                              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-200">
+                          ${result.users.map(user => `
+                              <tr>
+                                  <td class="px-6 py-4 whitespace-nowrap">
+                                      <div>
+                                          <p class="font-medium">${user.full_name}</p>
+                                          <p class="text-sm text-gray-500">${user.email}</p>
+                                      </div>
+                                  </td>
+                                  <td class="px-6 py-4 whitespace-nowrap">
+                                      <span class="px-2 py-1 text-xs rounded-full ${getRoleBadgeClass(user.role)}">
+                                          ${user.role}
+                                      </span>
+                                  </td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.department || '-'}</td>
+                                  <td class="px-6 py-4 whitespace-nowrap">
+                                      <span class="px-2 py-1 text-xs rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                          ${user.status}
+                                      </span>
+                                  </td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                      ${user.last_active ? new Date(user.last_active).toLocaleDateString() : 'Never'}
+                                  </td>
+                                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                      <button onclick="editUser(${user.id})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                                      <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                                  </td>
+                              </tr>
+                          `).join('')}
+                      </tbody>
+                  </table>
+              `;
+          }
+      } catch (error) {
+          console.error('Failed to load users:', error);
+      }
+      {% endif %}
+  }
+
+  function getRoleBadgeClass(role) {
+      switch (role) {
+          case 'admin':
+              return 'bg-red-100 text-red-800';
+          case 'broadcaster':
+              return 'bg-blue-100 text-blue-800';
+          case 'moderator':
+              return 'bg-yellow-100 text-yellow-800';
+          default:
+              return 'bg-gray-100 text-gray-800';
+      }
+  }
+
+  function editUser(userId) {
+      showToast('Edit User', 'User editing functionality would be implemented here', 'info');
+  }
+
+  function deleteUser(userId) {
+      if (confirm('Are you sure you want to delete this user?')) {
+          showToast('User Deleted', 'User has been removed from the system', 'success');
+          loadUsers(); // Reload the users table
+      }
+  }
+
+  // Initialize the dashboard
+  document.addEventListener('DOMContentLoaded', function() {
+      lucide.createIcons();
+
+      // Update viewer counts periodically
+      setInterval(() => {
+          // Simulate real-time viewer count updates
+          const viewerElements = document.querySelectorAll('[data-viewers]');
+          viewerElements.forEach(element => {
+              const currentCount = parseInt(element.textContent);
+              const change = Math.floor(Math.random() * 5) - 2; // -2 to +2
+              const newCount = Math.max(0, currentCount + change);
+              element.textContent = newCount;
+          });
+      }, 5000);
+  });
+</script>
+{% endblock %}
